@@ -20,7 +20,7 @@
 
 typedef struct {
   void *fn_ptr;
-  char *name;
+  const char *name;
 } entry_t;
 
 extern entry_t nvml_library_entry[];

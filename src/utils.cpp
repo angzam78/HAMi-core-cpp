@@ -22,13 +22,13 @@ int try_lock_unified_lock() {
     while (fd == -1) {
         if (cnt == 20) {
             LOG_MSG("unified_lock expired,removing...");
-            remove("/tmp/vgpulock/lock");
+            remove(unified_lock);
         }else{
             LOG_MSG("unified_lock locked, waiting 1 second...")
             sleep(rand()%5 + 1);
         }
         cnt++;
-        fd = open(unified_lock,O_CREAT | O_EXCL,S_IRWXU); 
+        fd = open(unified_lock,O_CREAT | O_EXCL,S_IRWXU);
     }
     return 0;
 }
@@ -40,7 +40,7 @@ int try_unlock_unified_lock() {
 }
 
 int mergepid(unsigned int *prev, unsigned int *current, nvmlProcessInfo_t1 *sub, nvmlProcessInfo_t1 *merged) {
-    int i,j;
+    unsigned int i,j;
     int found=0;
     for (i=0;i<*prev;i++){
         found=0;
@@ -49,7 +49,7 @@ int mergepid(unsigned int *prev, unsigned int *current, nvmlProcessInfo_t1 *sub,
             if (sub[i].pid == merged[j].pid) {
                 found = 1;
                 break;
-            } 
+            }
         }
         if (!found) {
             LOG_DEBUG("merged pid=%d\n",sub[i].pid);
@@ -61,7 +61,7 @@ int mergepid(unsigned int *prev, unsigned int *current, nvmlProcessInfo_t1 *sub,
 }
 
 int getextrapid(unsigned int prev, unsigned int current, nvmlProcessInfo_t1 *pre_pids_on_device, nvmlProcessInfo_t1 *pids_on_device) {
-    int i,j;
+    unsigned int i,j;
     int found = 0;
     for (i=0; i<prev; i++){
         LOG_INFO("prev pids[%d]=%d",i,pre_pids_on_device[i].pid);
@@ -93,13 +93,13 @@ nvmlReturn_t set_task_pid() {
     nvmlDevice_t device;
     nvmlReturn_t res;
     CUcontext pctx;
-    int i;
+    unsigned int i;
     CHECK_NVML_API(nvmlInit());
     CHECK_NVML_API(nvmlDeviceGetHandleByIndex(0, &device));
-    
+
     unsigned int nvmlCounts;
     CHECK_NVML_API(nvmlDeviceGetCount(&nvmlCounts));
-    
+
     int cudaDev;
     for (i=0;i<nvmlCounts;i++){
         cudaDev=nvml_to_cuda_map(i);
@@ -113,19 +113,19 @@ nvmlReturn_t set_task_pid() {
                 LOG_WARN("Device2GetComputeRunningProcesses failed %d,%d\n",res,i);
                 return res;
             }
-        }while(res==NVML_ERROR_INSUFFICIENT_SIZE); 
+        }while(res==NVML_ERROR_INSUFFICIENT_SIZE);
         mergepid(&previous,&merged_num,(nvmlProcessInfo_t1 *)tmp_pids_on_device,pre_pids_on_device);
     }
     previous = merged_num;
     merged_num = 0;
     memset(tmp_pids_on_device,0,sizeof(nvmlProcessInfo_v1_t)*SHARED_REGION_MAX_PROCESS_NUM);
-    CHECK_CU_RESULT(cuDevicePrimaryCtxRetain(&pctx,0));
+    CHECK_NV_RESULT(cuDevicePrimaryCtxRetain(&pctx,0));
     for (i=0;i<nvmlCounts;i++) {
         cudaDev=nvml_to_cuda_map(i);
         if (cudaDev<0) {
             continue;
         }
-        CHECK_NVML_API(nvmlDeviceGetHandleByIndex (i, &device)); 
+        CHECK_NVML_API(nvmlDeviceGetHandleByIndex (i, &device));
         do{
             res = nvmlDeviceGetComputeRunningProcesses(device, &running_processes, tmp_pids_on_device);
             if ((res != NVML_SUCCESS) && (res != NVML_ERROR_INSUFFICIENT_SIZE)) {
@@ -141,7 +141,7 @@ nvmlReturn_t set_task_pid() {
         LOG_INFO("current pid in use is %d %d",i,pids_on_device[i].pid);
         //tmp_pids_on_device[i].pid=0;
     }
-    unsigned int hostpid = getextrapid(previous,running_processes,pre_pids_on_device,pids_on_device); 
+    unsigned int hostpid = getextrapid(previous,running_processes,pre_pids_on_device,pids_on_device);
     if (hostpid==0) {
         LOG_WARN("host pid is error!");
         return NVML_ERROR_DRIVER_NOT_LOADED;
@@ -151,31 +151,31 @@ nvmlReturn_t set_task_pid() {
         for (i=0;i<running_processes;i++) {
             if (pids_on_device[i].pid==hostpid) {
                 LOG_INFO("Primary Context Size==%lld",tmp_pids_on_device[i].usedGpuMemory);
-                context_size = tmp_pids_on_device[i].usedGpuMemory; 
+                context_size = tmp_pids_on_device[i].usedGpuMemory;
                 break;
             }
         }
     }
-    CHECK_CU_RESULT(cuDevicePrimaryCtxRelease(0));
-    return NVML_SUCCESS; 
+    CHECK_NV_RESULT(cuDevicePrimaryCtxRelease(0));
+    return NVML_SUCCESS;
 }
 
 int parse_cuda_visible_env() {
-    int i,count,tmp;
+    unsigned int i,count,tmp;
     char *s = getenv("CUDA_VISIBLE_DEVICES");
     count = 0;
     for (i=0; i<16; i++) {
         cuda_to_nvml_map[i] = i;
-    }   
+    }
 
     if (need_cuda_virtualize()) {
         for (i=0; i<strlen(s); i++){
             if ((s[i] == ',') || (i == 0)){
                 tmp = (i==0) ? atoi(s) : atoi(s + i +1);
-                cuda_to_nvml_map[count] = tmp; 
+                cuda_to_nvml_map[count] = tmp;
                 count++;
             }
-        } 
+        }
     }
     for (i=0;i<16;i++){
         LOG_INFO("device %d -> %d",i,cuda_to_nvml_map[i]);
@@ -195,7 +195,8 @@ int getenvcount() {
         return -1;
     }
     LOG_DEBUG("get from env %s",s);
-    int i,count=0;
+    size_t i;
+    int count=0;
     for (i=0;i<strlen(s);i++){
         if (s[i]==',')
             count++;

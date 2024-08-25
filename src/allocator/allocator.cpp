@@ -3,7 +3,6 @@
 #include "include/libcuda_hook.h"
 #include "multiprocess/multiprocess_memory_limit.h"
 
-
 size_t BITSIZE = 512;
 size_t IPCSIZE = 2097152;
 size_t OVERSIZE = 134217728;
@@ -67,7 +66,7 @@ CUresult view_vgpu_allocator(){
     LOG_INFO("total=%lu",total);
     size_t t = get_current_device_memory_usage(0);
     LOG_INFO("current_device_memory_usage:%lu",t);
-    return 0;
+    return CUDA_SUCCESS;
 }
 
 CUresult get_listsize(allocated_list *al,size_t *size){
@@ -86,10 +85,10 @@ CUresult get_listsize(allocated_list *al,size_t *size){
 
 void allocator_init(){
     LOG_DEBUG("Allocator_init\n");
-    
-    device_overallocated = malloc(sizeof(allocated_list));
+
+    device_overallocated = (allocated_list*)malloc(sizeof(allocated_list));
     LIST_INIT(device_overallocated);
-    
+
     pthread_mutex_init(&mutex,NULL);
 }
 
@@ -101,7 +100,7 @@ int add_chunk(CUdeviceptr *address,size_t size){
     cuCtxGetDevice(&dev);
     if (oom_check(dev,size))
         return -1;
-    
+
     allocated_list_entry *e;
     INIT_ALLOCATED_LIST_ENTRY(e,addr,size);
     if (size <= IPCSIZE)
@@ -167,7 +166,7 @@ int remove_chunk(allocated_list *a_list, CUdeviceptr dptr){
             t_size=val->entry->length;
             cuMemoryFree(dptr);
             LIST_REMOVE(a_list,val);
-        
+
             CUdevice dev;
             cuCtxGetDevice(&dev);
             rm_gpu_device_memory_usage(getpid(),dev,t_size,2);
@@ -192,3 +191,7 @@ int free_raw(CUdeviceptr dptr){
     return tmp;
 }
 
+region_list *r_list;
+allocated_list *device_overallocated;
+allocated_list *array_list;
+pthread_mutex_t mutex;

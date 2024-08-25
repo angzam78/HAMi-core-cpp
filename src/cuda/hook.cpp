@@ -6,7 +6,7 @@ typedef void* (*fp_dlsym)(void*, const char*);
 extern fp_dlsym real_dlsym;
 
 cuda_entry_t cuda_library_entry[] = {
-    /* Init Part    */ 
+    /* Init Part    */
     {.name = "cuInit"},
     /* Deivce Part */
     {.name = "cuDeviceGetAttribute"},
@@ -217,6 +217,8 @@ cuda_entry_t cuda_library_entry[] = {
     {.name = "cuGetProcAddress_v2"},
 };
 
+extern cuda_entry_t cuda_library_entry[];
+
 int prior_function(char tmp[500]) {
     char *pos = tmp + strlen(tmp) - 3;
     if (pos[0]=='_' && pos[1]=='v') {
@@ -259,7 +261,7 @@ void load_cuda_libraries() {
                     if (cuda_library_entry[i].fn_ptr) {
                         LOG_INFO("found prior function %s",tmpfunc);
                         break;
-                    } 
+                    }
                 }
             }
         }
@@ -293,7 +295,7 @@ void *find_symbols_in_table(const char *symbol) {
     return NULL;
 }
 
-CUresult (*cuGetProcAddress_real) ( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags ); 
+CUresult (*cuGetProcAddress_real) ( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags );
 
 CUresult _cuGetProcAddress ( const char* symbol, void** pfn, int  cudaVersion, cuuint64_t flags ) {
     LOG_INFO("into _cuGetProcAddress symbol=%s:%d",symbol,cudaVersion);
@@ -311,10 +313,10 @@ CUresult cuGetProcAddress ( const char* symbol, void** pfn, int  cudaVersion, cu
     LOG_INFO("into cuGetProcAddress symbol=%s:%d",symbol,cudaVersion);
     *pfn = find_symbols_in_table(symbol);
     if (strcmp(symbol,"cuGetProcAddress")==0) {
-        CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuGetProcAddress,symbol,pfn,cudaVersion,flags); 
+        CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuGetProcAddress,symbol,pfn,cudaVersion,flags);
         if (res==CUDA_SUCCESS) {
-            cuGetProcAddress_real=*pfn;
-            *pfn=_cuGetProcAddress;
+            cuGetProcAddress_real=reinterpret_cast<decltype(&_cuGetProcAddress)>(*pfn);
+            *pfn=(void*)_cuGetProcAddress;
         }
         return res;
     }
@@ -336,17 +338,17 @@ CUresult _cuGetProcAddress_v2(const char *symbol, void **pfn, int cudaVersion, c
     }else{
         LOG_DEBUG("found symbol %s",symbol);
         return CUDA_SUCCESS;
-    } 
+    }
 }
 
 CUresult cuGetProcAddress_v2(const char *symbol, void **pfn, int cudaVersion, cuuint64_t flags, CUdriverProcAddressQueryResult *symbolStatus){
     LOG_INFO("into cuGetProcAddress_v2 symbol=%s:%d",symbol,cudaVersion);
     *pfn = find_symbols_in_table(symbol);
     if (strcmp(symbol,"cuGetProcAddress_v2")==0) {
-        CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuGetProcAddress_v2,symbol,pfn,cudaVersion,flags,symbolStatus); 
+        CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuGetProcAddress_v2,symbol,pfn,cudaVersion,flags,symbolStatus);
         if (res==CUDA_SUCCESS) {
-            cuGetProcAddress_real=*pfn;
-            *pfn=_cuGetProcAddress_v2;
+            cuGetProcAddress_real=reinterpret_cast<decltype(&_cuGetProcAddress)>(*pfn);
+            *pfn=(void*)_cuGetProcAddress_v2;
         }
         return res;
     }
@@ -356,5 +358,5 @@ CUresult cuGetProcAddress_v2(const char *symbol, void **pfn, int cudaVersion, cu
     }else{
         LOG_DEBUG("found symbol %s",symbol);
         return CUDA_SUCCESS;
-    } 
+    }
 }

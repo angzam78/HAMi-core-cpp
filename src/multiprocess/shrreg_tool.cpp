@@ -11,13 +11,13 @@
 void create_new() {
     load_env_from_file(ENV_OVERRIDE_FILE);
     umask(000);
-	char* shrreg_file = getenv(MULTIPROCESS_SHARED_REGION_CACHE_ENV);
+    const char* shrreg_file = getenv(MULTIPROCESS_SHARED_REGION_CACHE_ENV);
     if (shrreg_file == NULL) {
         shrreg_file = MULTIPROCESS_SHARED_REGION_CACHE_DEFAULT;
     }
     int fd = open(shrreg_file, O_RDWR | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
-    	LOG_ERROR("Fail to create new shrreg file\n");
+	LOG_ERROR("Fail to create new shrreg file\n");
         assert(0);
     }
     close(fd);
@@ -68,4 +68,3 @@ int main(int argc, char* argv[]) {
     }
     return 0;
 }
-

@@ -41,7 +41,7 @@ void rate_limiter(int grids, int blocks) {
   }
   set_recent_kernel(2);
   if ((get_current_device_sm_limit(0)>=100) || (get_current_device_sm_limit(0)==0))
-    	return;
+	return;
   if (get_utilization_switch()==0)
       return;
   LOG_DEBUG("grid: %d, blocks: %d", grids, blocks);
@@ -79,7 +79,7 @@ int delta(int up_limit, int user_current, int share) {
       abs(up_limit - user_current) < 5 ? 5 : abs(up_limit - user_current);
   int increment =
       g_sm_num * g_sm_num * g_max_thread_per_sm * utilization_diff / 2560;
-    
+
   /* Accelerate cuda cores allocation when utilization vary widely */
   if (utilization_diff > up_limit / 2) {
     increment = increment * utilization_diff * 2 / (up_limit + 1);
@@ -98,7 +98,7 @@ int delta(int up_limit, int user_current, int share) {
 unsigned int nvml_to_cuda_map(unsigned int nvmldev){
     unsigned int devcount;
     CHECK_NVML_API(nvmlDeviceGetCount_v2(&devcount));
-    int i=0;
+    unsigned int i=0;
     for (i=0;i<devcount;i++){
         if (cuda_to_nvml_map[i]==nvmldev)
           return i;
@@ -121,7 +121,7 @@ int get_used_gpu_utilization(int *userutil,int *sysprocnum) {
     struct timeval cur;
     size_t microsec;
 
-    int i,sum=0;
+    unsigned int i,sum=0;
     unsigned int infcount;
     size_t summonitor=0;
     nvmlProcessInfo_v1_t infos[SHARED_REGION_MAX_PROCESS_NUM];
@@ -129,7 +129,7 @@ int get_used_gpu_utilization(int *userutil,int *sysprocnum) {
     unsigned int nvmlCounts;
     CHECK_NVML_API(nvmlDeviceGetCount(&nvmlCounts));
 
-    int devi,cudadev;
+    unsigned int devi,cudadev;
     for (devi=0;devi<nvmlCounts;devi++){
       sum=0;
       summonitor=0;
@@ -155,7 +155,7 @@ int get_used_gpu_utilization(int *userutil,int *sysprocnum) {
           }
           set_gpu_device_memory_monitor(infos[i].pid,cudadev,summonitor);
           set_gpu_device_sm_utilization(infos[i].pid,cudadev,0);
-        } 
+        }
         continue;
       }
       for (i=0; i<processes_num; i++){
@@ -219,7 +219,7 @@ void init_utilization_watcher() {
     setspec();
     pthread_t tid;
     if ((get_current_device_sm_limit(0)<=100) && (get_current_device_sm_limit(0)>0)){
-        pthread_create(&tid, NULL, utilization_watcher, NULL);
+        pthread_create(&tid, NULL, (void* (*)(void*))utilization_watcher, NULL);
     }
     return;
 }

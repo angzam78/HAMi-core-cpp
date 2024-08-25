@@ -53,10 +53,10 @@ struct region_list_struct{
 };
 typedef struct region_list_struct region_list;
 
-region_list *r_list;
-allocated_list *device_overallocated;
-allocated_list *array_list;
-pthread_mutex_t mutex;
+extern region_list *r_list;
+extern allocated_list *device_overallocated;
+extern allocated_list *array_list;
+extern pthread_mutex_t mutex;
 
 #define LIST_INIT(list) {   \
     list->head=NULL;         \
@@ -89,13 +89,13 @@ pthread_mutex_t mutex;
     CUcontext __ctx;                                                           \
     CUresult __res=cuCtxGetCurrent(&__ctx);                                    \
     if (__res!=CUDA_SUCCESS) QUIT_WITH_ERROR("cuCtxGetCurrent failed");        \
-    __list_entry = malloc(sizeof(allocated_list_entry));                       \
+    __list_entry = (allocated_list_entry*)malloc(sizeof(allocated_list_entry));\
     if (__list_entry == NULL) QUIT_WITH_ERROR("malloc failed");                \
-    __list_entry->entry = malloc(sizeof(allocated_device_memory));             \
+    __list_entry->entry = (allocated_device_memory*)malloc(sizeof(allocated_device_memory)); \
     if (__list_entry->entry == NULL) QUIT_WITH_ERROR("malloc failed");         \
     __list_entry->entry->address=__address;                                    \
     __list_entry->entry->length=__size;                                        \
-    __list_entry->entry->allocHandle=malloc(sizeof(CUmemGenericAllocationHandle)); \
+    __list_entry->entry->allocHandle=(CUmemGenericAllocationHandle*)malloc(sizeof(CUmemGenericAllocationHandle)); \
     __list_entry->entry->ctx=__ctx;                                            \
     __list_entry->next=NULL;                                                   \
     __list_entry->prev=NULL;                                                   \

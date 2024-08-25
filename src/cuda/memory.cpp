@@ -39,7 +39,7 @@ const size_t cuarray_format_bytes[33] = {
     0,  // 0x1c
     0,  // 0x1d
     0,  // 0x1e
-    0,  // 0x1f       
+    0,  // 0x1f
     4   // CU_AD_FORMAT_FLOAT = 0x20
 };
 
@@ -137,7 +137,7 @@ CUresult cuMemoryAllocate(CUdeviceptr* dptr, size_t bytesize, size_t* bytesalloc
 CUresult cuMemAlloc_v2(CUdeviceptr* dptr, size_t bytesize) {
     LOG_INFO("into cuMemAllocing_v2 dptr=%p bytesize=%ld",dptr,bytesize);
     ENSURE_RUNNING();
-    CUresult res = allocate_raw(dptr,bytesize);
+    CUresult res = (CUresult)allocate_raw(dptr,bytesize);
     if (res!=CUDA_SUCCESS)
         return res;
     LOG_INFO("res=%d, cuMemAlloc_v2 success dptr=%p bytesize=%lu",0,(void *)*dptr,bytesize);
@@ -161,7 +161,7 @@ CUresult cuMemAllocHost_v2(void** hptr, size_t bytesize) {
 CUresult cuMemAllocManaged(CUdeviceptr* dptr, size_t bytesize, unsigned int flags) {
     LOG_DEBUG("cuMemAllocManaged dptr=%p bytesize=%ld",dptr,bytesize);
     ENSURE_RUNNING();
-    CUdevice dev;
+    CUdevice dev = 0;
     CUDA_OVERRIDE_CALL(cuda_library_entry,cuCtxGetDevice,&dev);
     if (oom_check(dev,bytesize)){
         return CUDA_ERROR_OUT_OF_MEMORY;
@@ -173,13 +173,13 @@ CUresult cuMemAllocManaged(CUdeviceptr* dptr, size_t bytesize, unsigned int flag
     return res;
 }
 
-CUresult cuMemAllocPitch_v2(CUdeviceptr* dptr, size_t* pPitch, size_t WidthInBytes, 
+CUresult cuMemAllocPitch_v2(CUdeviceptr* dptr, size_t* pPitch, size_t WidthInBytes,
                                       size_t Height, unsigned int ElementSizeBytes) {
     LOG_WARN("cuMemAllocPitch_v2 dptr=%p (%ld,%ld)",dptr,WidthInBytes,Height);
     size_t guess_pitch = (((WidthInBytes - 1) / ElementSizeBytes) + 1) * ElementSizeBytes;
     size_t bytesize = guess_pitch * Height;
     ENSURE_RUNNING();
-    CUdevice dev;
+    CUdevice dev = 0;
     CUDA_OVERRIDE_CALL(cuda_library_entry,cuCtxGetDevice,&dev);
     if (oom_check(dev,bytesize)){
         return CUDA_ERROR_OUT_OF_MEMORY;
@@ -196,7 +196,7 @@ CUresult cuMemFree_v2(CUdeviceptr dptr) {
     if (dptr == 0) {  // NULL
         return CUDA_SUCCESS;
     }
-    CUresult res = free_raw(dptr);
+    CUresult res = (CUresult)free_raw(dptr);
     LOG_INFO("after free_raw dptr=%p res=%d",(void *)dptr,res);
     return res;
 }
@@ -265,12 +265,12 @@ CUresult cuMemHostUnregister(void* hptr) {
     LOG_DEBUG("cuMemHostUnregister hptr=%p",hptr);
     ENSURE_RUNNING();
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemHostUnregister, hptr);
-    
+
     /*if (flag == CUDA_SUCCESS && bytesize > 0) {*/
     /*    // only device map registry is trackable*/
     /*    DECL_MEMORY_ON_SUCCESS(res, bytesize);*/
     /*}*/
-    //return CUDA_SUCCESS;    
+    //return CUDA_SUCCESS;
     return res;
 }
 
@@ -292,7 +292,7 @@ CUresult cuPointerGetAttributes ( unsigned int  numAttributes, CUpointer_attribu
     LOG_DEBUG("cuPointGetAttribue data=%p ptr=%llx",data,ptr);
     ENSURE_RUNNING();
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuPointerGetAttributes,numAttributes,attributes,data,ptr);
-    int cur=0;
+    unsigned int cur=0;
     for (cur=0;cur<numAttributes;cur++){
         if (attributes[cur]==CU_POINTER_ATTRIBUTE_MEMORY_TYPE){
             int j = check_memory_type(ptr);
@@ -300,7 +300,7 @@ CUresult cuPointerGetAttributes ( unsigned int  numAttributes, CUpointer_attribu
             LOG_DEBUG("check result = %d %d",j,*(int *)(data[cur]));
         }else{
             if (attributes[cur]==CU_POINTER_ATTRIBUTE_IS_MANAGED){
-                *(int *)(data[cur])=0;    
+                *(int *)(data[cur])=0;
             }
         }
     }
@@ -346,7 +346,7 @@ CUresult cuMemcpyAsync ( CUdeviceptr dst, CUdeviceptr src, size_t ByteCount, CUs
     LOG_DEBUG("cuMemcpyAsync,dst=%llx src=%llx count=%lu",dst,src,ByteCount);
     ENSURE_RUNNING();
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyAsync,dst,src,ByteCount,hStream);
-    return res; 
+    return res;
 }
 
 CUresult cuMemcpyAtoD_v2( CUdeviceptr dstDevice, CUarray srcArray, size_t srcOffset, size_t ByteCount ){
@@ -384,7 +384,7 @@ CUresult cuMemcpyDtoH_v2(void* dstHost, CUdeviceptr srcDevice, size_t ByteCount)
 CUresult cuMemcpyDtoHAsync_v2 ( void* dstHost, CUdeviceptr srcDevice, size_t ByteCount, CUstream hStream ){
     LOG_DEBUG("cuMemcpyDtoHAsync_v2,dst=%p src=%llx count=%lu",dstHost,srcDevice,ByteCount);
     ENSURE_RUNNING();
-    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoHAsync_v2,dstHost,srcDevice,ByteCount,hStream); 
+    return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemcpyDtoHAsync_v2,dstHost,srcDevice,ByteCount,hStream);
 }
 
 
@@ -469,7 +469,7 @@ CUresult cuMemsetD32_v2 ( CUdeviceptr dstDevice, unsigned int  ui, size_t N ){
 CUresult cuMemsetD32Async ( CUdeviceptr dstDevice, unsigned int  ui, size_t N, CUstream hStream ){
     ENSURE_RUNNING();
     return CUDA_OVERRIDE_CALL(cuda_library_entry,cuMemsetD32Async,dstDevice,ui,N,hStream);
-}   
+}
 
 
 CUresult cuMemsetD8_v2 ( CUdeviceptr dstDevice, unsigned char  uc, size_t N ){
@@ -516,8 +516,8 @@ CUresult cuMemGetInfo_v2(size_t* free, size_t* total) {
 }
 #endif
 
-CUresult cuMipmappedArrayCreate(CUmipmappedArray* pHandle, 
-                                          const CUDA_ARRAY3D_DESCRIPTOR* pMipmappedArrayDesc, 
+CUresult cuMipmappedArrayCreate(CUmipmappedArray* pHandle,
+                                          const CUDA_ARRAY3D_DESCRIPTOR* pMipmappedArrayDesc,
                                           unsigned int numMipmapLevels) {
     // TODO: compute bytesize
     LOG_DEBUG("cuMipmappedArrayCreate\n");
@@ -542,7 +542,7 @@ CUresult cuMipmappedArrayDestroy(CUmipmappedArray hMipmappedArray) {
 CUresult cuLaunchKernel ( CUfunction f, unsigned int  gridDimX, unsigned int  gridDimY, unsigned int  gridDimZ, unsigned int  blockDimX, unsigned int  blockDimY, unsigned int  blockDimZ, unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra ){
     ENSURE_RUNNING();
 
-    if (pidfound==1){ 
+    if (pidfound==1){
         rate_limiter(gridDimX * gridDimY * gridDimZ,
                    blockDimX * blockDimY * blockDimZ);
     }

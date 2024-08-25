@@ -92,7 +92,7 @@ CUresult cuDeviceTotalMem_v2 ( size_t* bytes, CUdevice dev ) {
 
 CUresult cuDriverGetVersion(int *driverVersion) {
     LOG_DEBUG("into cuDriverGetVersion__");
-    
+
     //stub dlsym to prelaod cuda functions
     dlsym(RTLD_DEFAULT,"cuDriverGetVersion");
 

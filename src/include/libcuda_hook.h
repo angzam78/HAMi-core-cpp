@@ -17,7 +17,7 @@
 
 typedef struct {
   void *fn_ptr;
-  char *name;
+  const char *name;
 } cuda_entry_t;
 
 #define FILENAME_MAX 4096
@@ -28,13 +28,12 @@ typedef CUresult (*cuda_sym_t)();
 
 #define CUDA_OVERRIDE_ENUM(x) OVERRIDE_##x
 
-#define CUDA_FIND_ENTRY(table, sym) ({ (table)[CUDA_OVERRIDE_ENUM(sym)].fn_ptr; })
+#define CUDA_FIND_ENTRY(table, sym) table[CUDA_OVERRIDE_ENUM(sym)].fn_ptr
 
-#define CUDA_OVERRIDE_CALL(table, sym, ...)                                    \
-  ({    \
-    LOG_DEBUG("Hijacking %s", #sym);                                           \
-    cuda_sym_t _entry = (cuda_sym_t)CUDA_FIND_ENTRY(table, sym);               \
-    _entry(__VA_ARGS__);                                                       \
+#define CUDA_OVERRIDE_CALL(table, sym, ...)                     \
+  ({                                                            \
+    LOG_DEBUG("Hijacking %s", #sym);                            \
+    ((decltype(sym)*)CUDA_FIND_ENTRY(table, sym))(__VA_ARGS__); \
   })
 
 typedef enum {

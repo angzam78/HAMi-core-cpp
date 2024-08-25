@@ -157,7 +157,7 @@ void resume_all();
 int wait_status_self(int status);
 int wait_status_all(int status);
 
-int load_env_from_file(char *filename);
+int load_env_from_file(const char *filename);
 int comparelwr(const char *s1,char *s2);
 int put_device_info();
 unsigned int nvml_to_cuda_map(unsigned int nvmldev);

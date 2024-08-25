@@ -22,20 +22,16 @@ typedef nvmlReturn_t (*driver_sym_t)();
 
 #define NVML_OVERRIDE_ENUM(x) OVERRIDE_##x
 
-#define NVML_FIND_ENTRY(table, sym) ({ (table)[NVML_OVERRIDE_ENUM(sym)].fn_ptr; })
+#define NVML_FIND_ENTRY(table, sym) table[NVML_OVERRIDE_ENUM(sym)].fn_ptr
 
-#define NVML_OVERRIDE_CALL(table, sym, ...)                                    \
-  ({                                                                           \
-    LOG_DEBUG("Hijacking %s", #sym);                                           \
-    driver_sym_t _entry = NVML_FIND_ENTRY(table, sym);                         \
-    _entry(__VA_ARGS__);                                                       \
+#define NVML_OVERRIDE_CALL(table, sym, ...)                     \
+  ({                                                            \
+    LOG_DEBUG("Hijacking %s", #sym);                            \
+    ((decltype(sym)*)NVML_FIND_ENTRY(table, sym))(__VA_ARGS__); \
   })
 
-#define NVML_OVERRIDE_CALL_NO_LOG(table, sym, ...)                             \
-  ({                                                                           \
-    driver_sym_t _entry = NVML_FIND_ENTRY(table, sym);                         \
-    _entry(__VA_ARGS__);                                                       \
-  })
+#define NVML_OVERRIDE_CALL_NO_LOG(table, sym, ...)              \
+    ((decltype(sym)*)NVML_FIND_ENTRY(table, sym))(__VA_ARGS__)
 
 /**
  * NVML management library enumerator entry

@@ -34,7 +34,7 @@ nvmlReturn_t nvmlShutdown(void) {
 
 const char *nvmlErrorString(nvmlReturn_t result) {
   const char *(*_entry)(nvmlReturn_t) =
-      NVML_FIND_ENTRY(nvml_library_entry, nvmlErrorString);
+      (const char *(*)(nvmlReturn_t))NVML_FIND_ENTRY(nvml_library_entry, nvmlErrorString);
 
   return _entry(result);
 }
@@ -163,7 +163,7 @@ nvmlReturn_t nvmlDeviceGetApplicationsClock(nvmlDevice_t device,
                                             nvmlClockType_t clockType,
                                             unsigned int *clockMHz) {
   return NVML_OVERRIDE_CALL(nvml_library_entry, nvmlDeviceGetApplicationsClock,
-                      		device, clockType, clockMHz);
+				device, clockType, clockMHz);
 }
 
 nvmlReturn_t
@@ -676,7 +676,7 @@ nvmlReturn_t nvmlDeviceGetSupportedEventTypes(nvmlDevice_t device,
   nvmlReturn_t res = NVML_OVERRIDE_CALL(nvml_library_entry, nvmlDeviceGetSupportedEventTypes,
                          device, eventTypes);
   // nvmlReturn_t res = NVML_OVERRIDE_CALL(nvml_library_entry, nvmlDeviceGetSupportedEventTypes,
-  //                       device, eventTypes); 
+  //                       device, eventTypes);
   return res;
 }
 

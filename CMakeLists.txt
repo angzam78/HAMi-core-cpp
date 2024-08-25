@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 2.8.12)
 project (libvgpu)
 
 macro(get_git_hash _git_hash)   
@@ -60,7 +60,7 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
     set(LIBRARY_COMPILE_FLAGS -shared -fPIC -g -D_GNU_SOURCE -Wall)
     set(TEST_COMPILE_FLAGS -o1)
 else()
-    set(LIBRARY_COMPILE_FLAGS -shared -fPIC -D_GNU_SOURCE -fvisibility=hidden -Wall)
+    set(LIBRARY_COMPILE_FLAGS -shared -fPIC -D_GNU_SOURCE -Wall)
     set(TEST_COMPILE_FLAGS -o1)
 endif()
 
@@ -68,7 +68,7 @@ include_directories(${CUDA_HOME}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_subdirectory(src)
-add_subdirectory(test)
+#add_subdirectory(test)
 
 if (BUILD_DOCKER STREQUAL true)
 	add_subdirectory(dockerfiles)

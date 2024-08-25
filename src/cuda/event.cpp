@@ -46,6 +46,7 @@ CUresult CUDAAPI cuModuleGetGlobal_v2(CUdeviceptr *dptr, size_t *bytes, CUmodule
     return res;
 }
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 CUresult CUDAAPI cuModuleGetTexRef(CUtexref *pTexRef, CUmodule hmod, const char *name) {
     LOG_INFO("cuModuleGetTexRef");
     return CUDA_OVERRIDE_CALL(cuda_library_entry,cuModuleGetTexRef,pTexRef,hmod,name);
@@ -55,6 +56,7 @@ CUresult CUDAAPI cuModuleGetSurfRef(CUsurfref *pSurfRef, CUmodule hmod, const ch
     LOG_INFO("cuModuleGetSurfRef");
     return CUDA_OVERRIDE_CALL(cuda_library_entry,cuModuleGetSurfRef,pSurfRef,hmod,name);
 }
+#pragma GCC diagnostic pop
 
 CUresult cuLinkAddData_v2 ( CUlinkState state, CUjitInputType type, void* data, size_t size, const char* name, unsigned int  numOptions, CUjit_option* options, void** optionValues ) {
     LOG_WARN("into cuLinkAddData_v2");

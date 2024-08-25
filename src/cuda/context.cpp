@@ -17,7 +17,7 @@ CUresult cuDevicePrimaryCtxRetain(CUcontext *pctx, CUdevice dev){
     //for Initialization only
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuDevicePrimaryCtxRetain,pctx,dev);
     if (ctx_activate[dev] == 0) {
-        add_gpu_device_memory_usage(getpid(),dev,context_size,0); 
+        add_gpu_device_memory_usage(getpid(),dev,context_size,0);
     }
     ctx_activate[dev] = 1;
     return res;
@@ -131,4 +131,3 @@ CUresult cuCtxSynchronize ( void ){
     CUresult res = CUDA_OVERRIDE_CALL(cuda_library_entry,cuCtxSynchronize);
     return res;
 }
-

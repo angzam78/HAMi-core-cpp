@@ -15,7 +15,7 @@
 
 extern void init_utilization_watcher(void);
 extern void utilization_watcher(void);
-extern void initial_virtual_map(void); 
+extern void initial_virtual_map(void);
 extern int set_host_pid(int hostpid);
 extern void allocator_init(void);
 void preInit();
@@ -29,7 +29,7 @@ pthread_once_t dlsym_init_flag = PTHREAD_ONCE_INIT;
  where to find its core utilization */
 extern int pidfound;
 
-/* cuda_to_nvml_map indicates cuda_visible_devices, we need to map it into nvml_visible_devices, 
+/* cuda_to_nvml_map indicates cuda_visible_devices, we need to map it into nvml_visible_devices,
 to let device-memory be counted successfully*/
 extern int cuda_to_nvml_map[16];
 
@@ -78,9 +78,9 @@ FUNC_ATTR_VISIBLE void* dlsym(void* handle, const char* symbol) {
     pthread_once(&dlsym_init_flag,init_dlsym);
     LOG_DEBUG("into dlsym %s",symbol);
     if (real_dlsym == NULL) {
-        real_dlsym = dlvsym(RTLD_NEXT,"dlsym","GLIBC_2.2.5");
+        real_dlsym = (fp_dlsym)dlvsym(RTLD_NEXT,"dlsym","GLIBC_2.2.5");
         if (real_dlsym == NULL) {
-            real_dlsym = _dl_sym(RTLD_NEXT, "dlsym", dlsym);
+            real_dlsym = (fp_dlsym)_dl_sym(RTLD_NEXT, "dlsym", (void*)dlsym);
             if (real_dlsym == NULL)
                 LOG_ERROR("real dlsym not found");
         }
@@ -240,8 +240,10 @@ void* __dlsym_hook_section(void* handle, const char* symbol) {
     DLSYM_HOOK_FUNC(cuModuleGetFunction);
     DLSYM_HOOK_FUNC(cuModuleUnload);
     DLSYM_HOOK_FUNC(cuModuleGetGlobal_v2);
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     DLSYM_HOOK_FUNC(cuModuleGetTexRef);
     DLSYM_HOOK_FUNC(cuModuleGetSurfRef);
+#pragma GCC diagnostic pop
     DLSYM_HOOK_FUNC(cuLinkAddData_v2);
     DLSYM_HOOK_FUNC(cuLinkCreate_v2);
     DLSYM_HOOK_FUNC(cuLinkAddFile_v2);
@@ -835,12 +837,12 @@ void* __dlsym_hook_section_nvml(void* handle, const char* symbol) {
 void preInit(){
     LOG_MSG("Initializing.....");
     if (real_dlsym == NULL) {
-        real_dlsym = _dl_sym(RTLD_NEXT, "dlsym", dlsym);
+        real_dlsym = (fp_dlsym)_dl_sym(RTLD_NEXT, "dlsym", (void*)dlsym);
     }
     real_realpath = NULL;
     load_cuda_libraries();
     nvmlInit();
-    ENSURE_INITIALIZED(); 
+    ENSURE_INITIALIZED();
 }
 
 void postInit(){
@@ -876,4 +878,3 @@ CUresult cuInit(unsigned int Flags){
     pthread_once(&post_cuinit_flag, (void(*) (void))postInit);
     return CUDA_SUCCESS;
 }
-
